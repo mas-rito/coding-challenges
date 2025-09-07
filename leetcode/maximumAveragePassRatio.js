@@ -17,42 +17,48 @@
 // Output: 0.53485
 
 var maxAverageRatio = function (classes, extraStudents) {
-  let minAverageRatio = Infinity;
-  let minArrayIndex = -1;
+  // Helper function to calculate the improvement in pass ratio when adding one student
+  const calculateImprovement = (pass, total) => {
+    const currentRatio = pass / total;
+    const newRatio = (pass + 1) / (total + 1);
+    return newRatio - currentRatio;
+  };
 
-  for (let i = 0; i < classes.length; i++) {
-    const currentRatio = classes[i][0] / classes[i][1];
-
-    if (currentRatio < minAverageRatio) {
-      minAverageRatio = currentRatio;
-      minArrayIndex = i;
+  // Create a max heap (priority queue) to always get the class with maximum improvement
+  // Since JavaScript doesn't have a built-in heap, we'll use a simple approach
+  // For each extra student, find the class that gives maximum improvement
+  
+  for (let student = 0; student < extraStudents; student++) {
+    let maxImprovement = -1;
+    let bestClassIndex = -1;
+    
+    // Find the class that gives maximum improvement when adding one student
+    for (let i = 0; i < classes.length; i++) {
+      const [pass, total] = classes[i];
+      const improvement = calculateImprovement(pass, total);
+      
+      if (improvement > maxImprovement) {
+        maxImprovement = improvement;
+        bestClassIndex = i;
+      }
     }
+    
+    // Add one student to the best class
+    classes[bestClassIndex][0] += 1;  // Increment pass count
+    classes[bestClassIndex][1] += 1;  // Increment total count
   }
 
-  // CORRECTED: Properly modify the sub-array values
-  // Method 1: Direct assignment to array indices
-  classes[minArrayIndex][0] += extraStudents;  // Add extraStudents to pass count
-  classes[minArrayIndex][1] += extraStudents;  // Add extraStudents to total count
+  console.log("Final classes:", classes);
 
-  // Alternative methods to modify sub-array values:
+  // Calculate the average pass ratio
+  let totalRatio = 0;
+  for (let i = 0; i < classes.length; i++) {
+    const [pass, total] = classes[i];
+    totalRatio += pass / total;
+  }
   
-  // Method 2: Using destructuring and reassignment
-  // let [pass, total] = classes[minArrayIndex];
-  // classes[minArrayIndex] = [pass + extraStudents, total + extraStudents];
-
-  // Method 3: Using splice to replace the entire sub-array
-  // classes.splice(minArrayIndex, 1, [
-  //   classes[minArrayIndex][0] + extraStudents,
-  //   classes[minArrayIndex][1] + extraStudents
-  // ]);
-
-  console.log(classes);
-
-  let passRatio = classes.map(([pass, total]) => pass / total);
-  console.log(passRatio);
-  
-  // Calculate average pass ratio (sum of all ratios divided by number of classes)
-  let averageRatio = passRatio.reduce((sum, ratio) => sum + ratio, 0) / passRatio.length;
+  const averageRatio = totalRatio / classes.length;
+  console.log("Average ratio:", averageRatio);
   return averageRatio;
 };
 
