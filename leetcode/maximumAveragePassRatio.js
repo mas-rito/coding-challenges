@@ -17,49 +17,58 @@
 // Output: 0.53485
 
 var maxAverageRatio = function (classes, extraStudents) {
-  // Helper function to calculate the improvement in pass ratio when adding one student
-  const calculateImprovement = (pass, total) => {
-    const currentRatio = pass / total;
-    const newRatio = (pass + 1) / (total + 1);
-    return newRatio - currentRatio;
-  };
+  if (classes.length === 0) return 0;
+  const calculateImprovement = (pass, total) => (pass + 1) / (total + 1) - pass / total;
 
-  // Create a max heap (priority queue) to always get the class with maximum improvement
-  // Since JavaScript doesn't have a built-in heap, we'll use a simple approach
-  // For each extra student, find the class that gives maximum improvement
-
-  for (let student = 0; student < extraStudents; student++) {
-    let maxImprovement = -1;
-    let bestClassIndex = -1;
-
-    // Find the class that gives maximum improvement when adding one student
-    for (let i = 0; i < classes.length; i++) {
-      const [pass, total] = classes[i];
-      const improvement = calculateImprovement(pass, total);
-
-      if (improvement > maxImprovement) {
-        maxImprovement = improvement;
-        bestClassIndex = i;
+  class MaxHeap {
+    constructor(compare) { this.data = []; this.compare = compare; }
+    push(val) {
+      this.data.push(val);
+      this._siftUp(this.data.length - 1);
+    }
+    pop() {
+      const top = this.data[0];
+      const last = this.data.pop();
+      if (this.data.length) {
+        this.data[0] = last;
+        this._siftDown(0);
+      }
+      return top;
+    }
+    _siftUp(idx) {
+      while (idx > 0) {
+        const parent = Math.floor((idx - 1) / 2);
+        if (this.compare(this.data[idx], this.data[parent])) {
+          [this.data[idx], this.data[parent]] = [this.data[parent], this.data[idx]];
+          idx = parent;
+        } else break;
       }
     }
-
-    // Add one student to the best class
-    classes[bestClassIndex][0] += 1; // Increment pass count
-    classes[bestClassIndex][1] += 1; // Increment total count
+    _siftDown(idx) {
+      const len = this.data.length;
+      while (true) {
+        let left = 2 * idx + 1;
+        let right = 2 * idx + 2;
+        let swapIdx = idx;
+        if (left < len && this.compare(this.data[left], this.data[swapIdx])) swapIdx = left;
+        if (right < len && this.compare(this.data[right], this.data[swapIdx])) swapIdx = right;
+        if (swapIdx === idx) break;
+        [this.data[idx], this.data[swapIdx]] = [this.data[swapIdx], this.data[idx]];
+        idx = swapIdx;
+      }
+    }
   }
 
-  console.log("Final classes:", classes);
-
-  // Calculate the average pass ratio
-  let totalRatio = 0;
-  for (let i = 0; i < classes.length; i++) {
-    const [pass, total] = classes[i];
-    totalRatio += pass / total;
+  const heap = new MaxHeap((a, b) =>
+    calculateImprovement(a[0], a[1]) > calculateImprovement(b[0], b[1])
+  );
+  for (const cls of classes) heap.push(cls);
+  for (let i = 0; i < extraStudents; i++) {
+    const cls = heap.pop();
+    cls[0]++; cls[1]++;
+    heap.push(cls);
   }
-
-  const averageRatio = totalRatio / classes.length;
-  console.log("Average ratio:", averageRatio);
-  return averageRatio;
+  return classes.reduce((sum, [p, t]) => sum + p/t, 0) / classes.length;
 };
 
 console.log(
